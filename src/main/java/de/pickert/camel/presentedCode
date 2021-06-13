@@ -1,0 +1,44 @@
+package de.pickert.camel;
+
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import org.apache.camel.builder.RouteBuilder;
+import org.springframework.stereotype.Component;
+
+
+@Component
+public class MySpringBootRouter extends RouteBuilder {
+
+
+	@Override
+	public void configure() {
+		from("activemq:queue:Camel")  //starting point of route - where message is sent from
+
+				.log("${body}")           //message in log - only the body - use .to("log:out") for entire message
+				.to("activemq:topic:AAABBBCCC")   //endpoint - where message is sent to
+				.process(new Processor() {        //processor used to change the messsage, in this case add "hallo" to the message
+					@Override
+					public void process(Exchange exchange) throws Exception {
+						String payload = exchange.getIn().getBody(String.class);
+						payload = payload + " hallo";
+						exchange.getIn().setBody(payload);
+					}
+				})
+				.to("activemq:queue:CamelAntwort");
+	}
+
+}
+
+
+//filter only sends messages that contain foo in the body
+
+/*		from("activemq:queue:Camel")
+				.filter(simple("${body} contains 'foo'"))
+				.process(new Processor() {
+					@Override
+					public void process(Exchange exchange) throws Exception {
+						exchange.getIn().setBody("WooooooW");
+					}
+				})
+				.to("activemq:queue:CamelAntwort");  */
+
